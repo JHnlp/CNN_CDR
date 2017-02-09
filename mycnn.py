@@ -22,7 +22,6 @@ from layers import EntityLookUpTableLayer, Seq2VecLookUpTableLayer, \
     Path2VecLookUpTableLayer, MaxMinMeanConvPoolLayer
 from evaluation import *
 
-# Global Variables
 g_sentence_maxlen = 250  
 g_distance_vocab_size = g_sentence_maxlen * 2
 
@@ -65,16 +64,6 @@ def post_pad_text_seq(text_seq, maxlen_after_padding=150):
 
 def construct_customized_word_embedding_model(external_large_word2vec_file, local_small_word2vec_file,
                                               local_pos_vocab_file, local_syn_vocab_file, local_dep_vocab_file):
-    """
-    According to my small trained model, truncate the external large word2vec embedding model to fit a small size.
-    Using the embeddings from large corpus to update the customized embedding model
-    :param external_large_word2vec_file:
-    :param local_small_word2vec_file:
-    :param local_pos_vocab_file:
-    :param local_syn_vocab_file:
-    :param local_dep_vocab_file:
-    :return:
-    """
     external_embeddings = Word2Vec.load_word2vec_format(external_large_word2vec_file, binary=True)
     my_trained_wd_embeddings = Word2Vec.load_word2vec_format(local_small_word2vec_file, binary=False)
     dim = my_trained_wd_embeddings.syn0.shape[-1]
@@ -471,155 +460,16 @@ class CustomizedModel(object):
         self.TH_Y = T.ivector('TH_Y')
         self.TH_Y_Catigorical = T.imatrix('TH_Y_Catigorical')
 
-        # layer_EntLookUp = EntityLookUpTableLayer(inputs=[self.TH_ChemEnt, self.TH_DisEnt], weights=wd_Embd_W)
-        # ly_WordLookUp = Seq2VecLookUpTableLayer(
-        #     inputs=[self.TH_ChemLWds, self.TH_ChemRWds, self.TH_DisLWds, self.TH_DisRWds], weights=wd_Embd_W)
-        # input_tensor = T.concatenate(
-        #     [ly_WordLookUp.outputs[0].flatten(2), layer_EntLookUp.outputs[0], ly_WordLookUp.outputs[1].flatten(2),
-        #      ly_WordLookUp.outputs[2].flatten(2), layer_EntLookUp.outputs[1],
-        #      ly_WordLookUp.outputs[3].flatten(2)], axis=1)
-        #
-        # tag_W = theano.shared(
-        #     np.random.uniform(-1., 1., (2, self.dist_embedding_dim)).astype('float32'))
-        # ly_SentIsTitle = Seq2VecLookUpTableLayer(inputs=[self.TH_SentIsTitle], weights=tag_W)
-        # input_tensor = T.concatenate([input_tensor, ly_SentIsTitle.outputs[0]], axis=-1)
-        # ly_H1 = HiddenLayer(inputs=input_tensor,
-        #                     n_in=g_word_embedding_dim * 2 + self.ent_context_size // 2 * 4 * g_word_embedding_dim + self.dist_embedding_dim,
-        #                     n_out=1500, activation=T.tanh)
-        # input_tensor = T.switch(self.TH_Phrase > 0, dropout(ly_H1.output, n_in=1500, p=0.3), ly_H1.output)
-        # ly_SoftMax = SoftMaxLayer(input=input_tensor, n_in=1500, n_out=2)
-        # self.layers = [ly_SoftMax, ly_H1, ly_SentIsTitle, ly_WordLookUp, layer_EntLookUp]
-        # self.params = ly_SoftMax.params + ly_H1.params + ly_SentIsTitle.params + ly_WordLookUp.params
-
-        # layer_EntLookUp = EntityLookUpTableLayer(inputs=[self.TH_ChemEnt, self.TH_DisEnt], weights=wd_Embd_W)
-        # ly_WordLookUp = Seq2VecLookUpTableLayer(
-        #     inputs=[self.TH_ChemLWds, self.TH_ChemRWds, self.TH_DisLWds, self.TH_DisRWds], weights=wd_Embd_W)
-        # input_tensor = T.concatenate(
-        #     [ly_WordLookUp.outputs[0].flatten(2), layer_EntLookUp.outputs[0], ly_WordLookUp.outputs[1].flatten(2),
-        #      ly_WordLookUp.outputs[2].flatten(2), layer_EntLookUp.outputs[1],
-        #      ly_WordLookUp.outputs[3].flatten(2)], axis=1)
-        # ly_H1 = HiddenLayer(
-        #     inputs=input_tensor, n_in=g_word_embedding_dim * 2 + self.ent_context_size // 2 * 4 * g_word_embedding_dim,
-        #     n_out=1500, activation=T.tanh)
-        # input_tensor = T.switch(self.TH_Phrase > 0, dropout(ly_H1.output, n_in=1500, p=0.3), ly_H1.output)
-        # ly_SoftMax = SoftMaxLayer(input=input_tensor, n_in=1500, n_out=2)
-        # self.layers = [ly_SoftMax, ly_H1, ly_WordLookUp, layer_EntLookUp]
-        # self.params = ly_SoftMax.params + ly_H1.params + ly_WordLookUp.params
-
-        # layer_EntLookUp = EntityLookUpTableLayer(inputs=[self.TH_ChemEnt, self.TH_DisEnt], weights=wd_Embd_W)
-        # ly_WordLookUp = Seq2VecLookUpTableLayer(
-        #     inputs=[self.TH_ChemLWds, self.TH_ChemRWds, self.TH_DisLWds, self.TH_DisRWds, self.TH_InBetweenVerbs],
-        #     weights=wd_Embd_W)
-        # ent_info_tensor = T.concatenate(
-        #     [ly_WordLookUp.outputs[0].flatten(2), layer_EntLookUp.outputs[0], ly_WordLookUp.outputs[1].flatten(2),
-        #      ly_WordLookUp.outputs[2].flatten(2), layer_EntLookUp.outputs[1],
-        #      ly_WordLookUp.outputs[3].flatten(2), ly_WordLookUp.outputs[-1].flatten(2)], axis=1)
-        # ly_H1 = HiddenLayer(
-        #     inputs=ent_info_tensor,
-        #     n_in=g_word_embedding_dim * 2 + self.ent_context_size // 2 * 4 * g_word_embedding_dim + 10 * g_word_embedding_dim,
-        #     n_out=1500, activation=T.tanh)
-        # input_tensor = T.switch(self.TH_Phrase > 0, dropout(ly_H1.output, n_in=1500, p=0.3), ly_H1.output)
-        # ly_SoftMax = SoftMaxLayer(input=input_tensor, n_in=1500, n_out=2)
-        # self.layers = [ly_SoftMax, ly_H1, ly_WordLookUp, layer_EntLookUp]
-        # self.params = ly_SoftMax.params + ly_H1.params + ly_WordLookUp.params
-
-        # ly_WordLookUp = Seq2VecLookUpTableLayer(inputs=[self.TH_Sent], weights=wd_Embd_W)
-        # ly_DistLookUp = Seq2VecLookUpTableLayer(inputs=[self.TH_Dist2Chem, self.TH_Dist2Dis],
-        #                                         vocab_size=self.dist_vocab_size, dim_size=self.dist_embedding_dim)
-        # input_tensor = ly_WordLookUp.outputs[0]
-        # input_tensor = T.concatenate((input_tensor, ly_DistLookUp.outputs[0], ly_DistLookUp.outputs[1]), axis=-1)
-        # input_tensor = input_tensor.dimshuffle(0, 'x', 1, 2)
-        # ly_Conv1 = LeNetConvPoolLayer(
-        #     input=input_tensor, input_shape=(None, 1, self.sentence_maxlen, 300 + 2 * self.dist_embedding_dim),
-        #     filter_shape=(150, 1, 5, 300 + 2 * self.dist_embedding_dim), poolsize=(2, 1))
-        # input_tensor = ly_Conv1.output.flatten(2)
-        # ly_H1 = HiddenLayer(inputs=input_tensor, n_in=150 * 123, n_out=2000, activation=T.tanh)
-        # input_tensor = T.switch(self.TH_Phrase > 0, dropout(ly_H1.output, n_in=2000, p=0.2),
-        #                         ly_H1.output)
-        # ly_SoftMax = SoftMaxLayer(input=input_tensor, n_in=2000, n_out=2)
-        # self.layers = [ly_SoftMax, ly_H1, ly_Conv1, ly_WordLookUp]
-        # self.params = ly_SoftMax.params + ly_H1.params + ly_Conv1.params + ly_WordLookUp.params
-
-        '''
-        d2Chem_W = theano.shared(
-            np.random.uniform(-1., 1., (self.dist_vocab_size, self.dist_embedding_dim)).astype('float32'))
-        d2Dis_W = theano.shared(
-            np.random.uniform(-1., 1., (self.dist_vocab_size, self.dist_embedding_dim)).astype('float32'))
-        layer_D2Chem = Seq2VecLookUpTableLayer(inputs=[self.TH_Dist2Chem], weights=d2Chem_W)
-        layer_D2Dis = Seq2VecLookUpTableLayer(inputs=[self.TH_Dist2Dis], weights=d2Dis_W)
-        ly_WordLookUp = Seq2VecLookUpTableLayer(inputs=[self.TH_Wd_represent], weights=wd_Embd_W)
-        input_tensor = ly_WordLookUp.outputs[0]
-        input_tensor = input_tensor.reshape(
-            (-1, self.sentence_maxlen, self.wd_represent_win_size * g_word_embedding_dim))
-        input_tensor = T.concatenate((input_tensor, layer_D2Chem.outputs[0], layer_D2Dis.outputs[0]), axis=-1)
-        ly_Conv1 = SimpleConvPoolLayer(
-            input=input_tensor, filter_shape=(
-                self.nb_filters, self.wd_represent_win_size * g_word_embedding_dim + 2 * self.dist_embedding_dim),
-            activation=T.tanh)
-        '''
-        # ly_WordLookUp = Seq2VecLookUpTableLayer(inputs=[
-        #     self.TH_RPR_DepR2C, self.TH_RPR_DepR2D, self.TH_RPR_DepC2D], weights=wd_Embd_W)
-        # input_tensor1 = ly_WordLookUp.outputs[0]
-        # input_tensor1 = input_tensor1.reshape((-1, 110, self.wd_represent_win_size * g_word_embedding_dim))
-        # input_tensor2 = ly_WordLookUp.outputs[1]
-        # input_tensor2 = input_tensor2.reshape((-1, 110, self.wd_represent_win_size * g_word_embedding_dim))
-        # input_tensor3 = ly_WordLookUp.outputs[2]
-        # input_tensor3 = input_tensor3.reshape((-1, 110, self.wd_represent_win_size * g_word_embedding_dim))
-        # # ly_DistLookUp = Seq2VecLookUpTableLayer(inputs=[self.TH_Dist2Chem, self.TH_Dist2Dis],
-        # #                                         vocab_size=self.dist_vocab_size, dim_size=self.dist_embedding_dim)
-        # input_tensor = T.concatenate([input_tensor1, input_tensor2, input_tensor3], axis=-1)
-        # ly_Conv1 = SimpleConvPoolLayer(
-        #     input=input_tensor, filter_shape=(
-        #         300, 3 * self.wd_represent_win_size * g_word_embedding_dim), activation=T.tanh)
-        # input_tensor = ly_Conv1.output.flatten(2)
-        # ly_H1 = HiddenLayer(inputs=input_tensor, n_in=300, n_out=1500, activation=T.tanh)
-        # input_tensor = T.switch(self.TH_Phrase > 0, dropout(ly_H1.output, n_in=1500, p=0.2), ly_H1.output)
-        # ly_SoftMax = SoftMaxLayer(input=input_tensor, n_in=1500, n_out=2)
-        # self.layers = [ly_SoftMax, ly_H1, ly_Conv1, ly_WordLookUp]
-        # self.params = ly_SoftMax.params + ly_H1.params + ly_Conv1.params + ly_WordLookUp.params
-
-        '''
-        ly_WordLookUp = Seq2VecLookUpTableLayer(inputs=[self.TH_Sent], weights=wd_Embd_W)
-        ly_DistLookUp = Seq2VecLookUpTableLayer(inputs=[self.TH_Dist2Chem, self.TH_Dist2Dis],
-                                                vocab_size=self.dist_vocab_size, dim_size=self.dist_embedding_dim)
-        ly_Dep2RootLookUp = Path2VecLookUpTableLayer(inputs=[self.TH_DepR2C], weights=wd_Embd_W)
-        input_tensor = T.concatenate(
-            [ly_WordLookUp.outputs[0], ly_WordLookUp.outputs[1], ly_DistLookUp.outputs[0], ly_DistLookUp.outputs[1],
-             ly_Dep2RootLookUp.outputs[0].flatten(3)],
-            axis=-1)
-        ly_Conv1 = SimpleConvPoolLayer(
-            input=input_tensor, filter_shape=(self.nb_filters, 600 + 2 * self.dist_embedding_dim + 12000),
-            activation=T.tanh)
-        input_tensor = ly_Conv1.output.flatten(2)
-        ly_H1 = HiddenLayer(inputs=input_tensor, n_in=self.nb_filters, n_out=1500, activation=T.tanh)
-        input_tensor = T.switch(self.TH_Phrase > 0, dropout(ly_H1.output, n_in=1500, p=0.2), ly_H1.output)
-        ly_SoftMax = SoftMaxLayer(input=input_tensor, n_in=1500, n_out=2)
-        self.layers = [ly_SoftMax, ly_H1, ly_Conv1, ly_DistLookUp, ly_WordLookUp]
-        self.params = ly_SoftMax.params + ly_H1.params + ly_Conv1.params + ly_DistLookUp.params + ly_WordLookUp.params
-        '''
-        # ly_WordLookUp = Seq2VecLookUpTableLayer(inputs=[self.TH_DepR2C, self.TH_DepR2D, self.TH_DepC2D],
-        #                                         weights=wd_Embd_W)
-        # input_tensor = T.concatenate(
-        #     [ly_WordLookUp.outputs[0], ly_WordLookUp.outputs[1], ly_WordLookUp.outputs[2]], axis=-1)
-        # ly_Conv1 = SimpleConvPoolLayer(
-        #     input=input_tensor, filter_shape=(self.nb_filters, 900), activation=T.tanh)
-        # input_tensor = ly_Conv1.output.flatten(2)
-        # ly_H1 = HiddenLayer(inputs=input_tensor, n_in=self.nb_filters, n_out=1500, activation=T.tanh)
-        # input_tensor = T.switch(self.TH_Phrase > 0, dropout(ly_H1.output, n_in=1500, p=0.2), ly_H1.output)
-        # ly_SoftMax = SoftMaxLayer(input=input_tensor, n_in=1500, n_out=2)
-        # self.layers = [ly_SoftMax, ly_H1, ly_Conv1, ly_WordLookUp]
-        # self.params = ly_SoftMax.params + ly_H1.params + ly_Conv1.params + ly_WordLookUp.params
-
         layer_EntLookUp = EntityLookUpTableLayer(inputs=[self.TH_ChemEnt, self.TH_DisEnt], weights=wd_Embd_W)
         ly_WordLookUp = Seq2VecLookUpTableLayer(
             inputs=[self.TH_ChemLWds, self.TH_ChemRWds, self.TH_DisLWds, self.TH_DisRWds,
                     # self.TH_DepR2C, self.TH_DepR2D, self.TH_DepC2D],
-                    self.TH_RPR_DepR2C, self.TH_RPR_DepR2D, self.TH_RPR_DepC2D],
+                    self.TH_RPR_DepR2C, self.TH_RPR_DepR2D, self.TH_RPR_DepC2D, self.TH_InBetweenVerbs],
             weights=wd_Embd_W)
         ent_info_tensor = T.concatenate(
             [ly_WordLookUp.outputs[0].flatten(2), layer_EntLookUp.outputs[0], ly_WordLookUp.outputs[1].flatten(2),
              ly_WordLookUp.outputs[2].flatten(2), layer_EntLookUp.outputs[1],
-             ly_WordLookUp.outputs[3].flatten(2)], axis=1)
+             ly_WordLookUp.outputs[3].flatten(2), ly_WordLookUp.outputs[-1].flatten(2)], axis=1)
         tensor_depR2C = ly_WordLookUp.outputs[4]
         tensor_depR2C = tensor_depR2C.reshape((-1, 110, self.wd_represent_win_size * g_word_embedding_dim))
         tensor_depR2D = ly_WordLookUp.outputs[5]
@@ -627,86 +477,18 @@ class CustomizedModel(object):
         tensor_depC2D = ly_WordLookUp.outputs[6]
         tensor_depC2D = tensor_depC2D.reshape((-1, 110, self.wd_represent_win_size * g_word_embedding_dim))
         dep_tensor = T.concatenate([tensor_depR2C, tensor_depR2D, tensor_depC2D], axis=-1)
-        # # dep_tensor = T.concatenate(
-        # #     [ly_WordLookUp.outputs[4], ly_WordLookUp.outputs[5], ly_WordLookUp.outputs[6]], axis=-1)
         ly_Conv1 = SimpleConvPoolLayer(
             input=dep_tensor, filter_shape=(
                 self.nb_filters, 3 * self.wd_represent_win_size * g_word_embedding_dim), activation=T.tanh)
         input_tensor = T.concatenate([ent_info_tensor, ly_Conv1.output.flatten(2)], axis=-1)
         ly_H1 = HiddenLayer(
             inputs=input_tensor,
-            n_in=self.nb_filters + g_word_embedding_dim * 2 + self.ent_context_size // 2 * 4 * g_word_embedding_dim,
+            n_in=self.nb_filters + g_word_embedding_dim * 2 + self.ent_context_size // 2 * 4 * g_word_embedding_dim + 10 * g_word_embedding_dim,
             n_out=1500, activation=T.tanh)
         input_tensor = T.switch(self.TH_Phrase > 0, dropout(ly_H1.output, n_in=1500, p=0.3), ly_H1.output)
         ly_SoftMax = SoftMaxLayer(input=input_tensor, n_in=1500, n_out=2)
         self.layers = [ly_SoftMax, ly_H1, ly_Conv1, ly_WordLookUp, layer_EntLookUp]
         self.params = ly_SoftMax.params + ly_H1.params + ly_Conv1.params + ly_WordLookUp.params
-
-        # layer_EntLookUp = EntityLookUpTableLayer(inputs=[self.TH_ChemEnt, self.TH_DisEnt], weights=wd_Embd_W)
-        # ly_WordLookUp = Seq2VecLookUpTableLayer(
-        #     inputs=[self.TH_ChemLWds, self.TH_ChemRWds, self.TH_DisLWds, self.TH_DisRWds,
-        #             # self.TH_DepR2C, self.TH_DepR2D, self.TH_DepC2D],
-        #             self.TH_RPR_DepR2C, self.TH_RPR_DepR2D, self.TH_RPR_DepC2D, self.TH_RPR_DepD2C],
-        #     weights=wd_Embd_W)
-        # ent_info_tensor = T.concatenate(
-        #     [ly_WordLookUp.outputs[0].flatten(2), layer_EntLookUp.outputs[0], ly_WordLookUp.outputs[1].flatten(2),
-        #      ly_WordLookUp.outputs[2].flatten(2), layer_EntLookUp.outputs[1],
-        #      ly_WordLookUp.outputs[3].flatten(2)], axis=1)
-        # tensor_depR2C = ly_WordLookUp.outputs[4]
-        # tensor_depR2C = tensor_depR2C.reshape((-1, 110, self.wd_represent_win_size * g_word_embedding_dim))
-        # tensor_depR2D = ly_WordLookUp.outputs[5]
-        # tensor_depR2D = tensor_depR2D.reshape((-1, 110, self.wd_represent_win_size * g_word_embedding_dim))
-        # tensor_depC2D = ly_WordLookUp.outputs[6]
-        # tensor_depC2D = tensor_depC2D.reshape((-1, 110, self.wd_represent_win_size * g_word_embedding_dim))
-        # tensor_depD2C = ly_WordLookUp.outputs[7]
-        # tensor_depD2C = tensor_depD2C.reshape((-1, 110, self.wd_represent_win_size * g_word_embedding_dim))
-        # dep_tensor = T.concatenate([tensor_depR2C, tensor_depR2D, tensor_depC2D, tensor_depD2C], axis=-1)
-        # # dep_tensor = T.concatenate(
-        # #     [ly_WordLookUp.outputs[4], ly_WordLookUp.outputs[5], ly_WordLookUp.outputs[6]], axis=-1)
-        # ly_Conv1 = SimpleConvPoolLayer(
-        #     input=dep_tensor, filter_shape=(
-        #         self.nb_filters, 4 * self.wd_represent_win_size * g_word_embedding_dim), activation=T.tanh)
-        # input_tensor = T.concatenate([ent_info_tensor, ly_Conv1.output.flatten(2)], axis=-1)
-        # ly_H1 = HiddenLayer(
-        #     inputs=input_tensor,
-        #     n_in=self.nb_filters + g_word_embedding_dim * 2 + self.ent_context_size // 2 * 4 * g_word_embedding_dim,
-        #     n_out=1500, activation=T.tanh)
-        # input_tensor = T.switch(self.TH_Phrase > 0, dropout(ly_H1.output, n_in=1500, p=0.3), ly_H1.output)
-        # ly_SoftMax = SoftMaxLayer(input=input_tensor, n_in=1500, n_out=2)
-        # self.layers = [ly_SoftMax, ly_H1, ly_Conv1, ly_WordLookUp, layer_EntLookUp]
-        # self.params = ly_SoftMax.params + ly_H1.params + ly_Conv1.params + ly_WordLookUp.params
-
-        # layer_EntLookUp = EntityLookUpTableLayer(inputs=[self.TH_ChemEnt, self.TH_DisEnt], weights=wd_Embd_W)
-        # ly_WordLookUp = Seq2VecLookUpTableLayer(
-        #     inputs=[self.TH_ChemLWds, self.TH_ChemRWds, self.TH_DisLWds, self.TH_DisRWds,
-        #             # self.TH_DepR2C, self.TH_DepR2D, self.TH_DepC2D],
-        #             self.TH_RPR_DepR2C, self.TH_RPR_DepR2D, self.TH_RPR_DepC2D, self.TH_InBetweenVerbs],
-        #     weights=wd_Embd_W)
-        # ent_info_tensor = T.concatenate(
-        #     [ly_WordLookUp.outputs[0].flatten(2), layer_EntLookUp.outputs[0], ly_WordLookUp.outputs[1].flatten(2),
-        #      ly_WordLookUp.outputs[2].flatten(2), layer_EntLookUp.outputs[1],
-        #      ly_WordLookUp.outputs[3].flatten(2), ly_WordLookUp.outputs[-1].flatten(2)], axis=1)
-        # tensor_depR2C = ly_WordLookUp.outputs[4]
-        # tensor_depR2C = tensor_depR2C.reshape((-1, 110, self.wd_represent_win_size * g_word_embedding_dim))
-        # tensor_depR2D = ly_WordLookUp.outputs[5]
-        # tensor_depR2D = tensor_depR2D.reshape((-1, 110, self.wd_represent_win_size * g_word_embedding_dim))
-        # tensor_depC2D = ly_WordLookUp.outputs[6]
-        # tensor_depC2D = tensor_depC2D.reshape((-1, 110, self.wd_represent_win_size * g_word_embedding_dim))
-        # dep_tensor = T.concatenate([tensor_depR2C, tensor_depR2D, tensor_depC2D], axis=-1)
-        # # dep_tensor = T.concatenate(
-        # #     [ly_WordLookUp.outputs[4], ly_WordLookUp.outputs[5], ly_WordLookUp.outputs[6]], axis=-1)
-        # ly_Conv1 = SimpleConvPoolLayer(
-        #     input=dep_tensor, filter_shape=(
-        #         self.nb_filters, 3 * self.wd_represent_win_size * g_word_embedding_dim), activation=T.tanh)
-        # input_tensor = T.concatenate([ent_info_tensor, ly_Conv1.output.flatten(2)], axis=-1)
-        # ly_H1 = HiddenLayer(
-        #     inputs=input_tensor,
-        #     n_in=self.nb_filters + g_word_embedding_dim * 2 + self.ent_context_size // 2 * 4 * g_word_embedding_dim + 10 * g_word_embedding_dim,
-        #     n_out=1500, activation=T.tanh)
-        # input_tensor = T.switch(self.TH_Phrase > 0, dropout(ly_H1.output, n_in=1500, p=0.3), ly_H1.output)
-        # ly_SoftMax = SoftMaxLayer(input=input_tensor, n_in=1500, n_out=2)
-        # self.layers = [ly_SoftMax, ly_H1, ly_Conv1, ly_WordLookUp, layer_EntLookUp]
-        # self.params = ly_SoftMax.params + ly_H1.params + ly_Conv1.params + ly_WordLookUp.params
 
         L1 = theano.shared(0.)
         L2 = theano.shared(0.)
@@ -1141,94 +923,6 @@ if __name__ == '__main__':
 
     end_time = time.time()
     print(end_time - start_time)
-    pass
-
-    # ********** test **********
-    # training_instances = basics.load_candidate_instances('trainingSet.instances')
-    # dev_instances = basics.load_candidate_instances('developmentSet.instances')
-    # t1 = time.time()
-    # tr_X_sents, tr_X_sent_is_title, tr_X_sent_dist_2_title, tr_X_sent_dist_2_end, tr_X_pos, tr_X_represented_sentences, tr_X_dist_2_Chem, tr_X_dist_2_Dis, \
-    # tr_X_syn_Chem2Root, tr_X_syn_Dis2Root, tr_X_syn_Chem2Dis, tr_X_dep_Root2Chem, tr_X_dep_Root2Dis, tr_X_dep_Chem2Dis, tr_X_dep_Dis2Chem, \
-    # tr_X_rpr_depR2C, tr_X_rpr_depR2D, tr_X_rpr_depC2D, tr_X_rpr_depD2C, \
-    # tr_X_chemicals, tr_X_diseases, tr_X_chem_lwds, tr_X_chem_ltags, tr_X_chem_rwds, tr_X_chem_rtags, \
-    # tr_X_dis_lwds, tr_X_dis_ltags, tr_X_dis_rwds, tr_X_dis_rtags, tr_X_in_between_wds, tr_X_in_between_tags, tr_X_in_between_verbs, \
-    # tr_Y, tr_Y_catigorical = generateInputs(
-    #     training_instances, pretrained_word_embeddings, sentence_maxlen=250, entity_context_size=3,
-    #     word_represent_win_size=5)
-    # print(tr_X_in_between_verbs.get_value(borrow=True))
-    # tokens = training_instances[12].get_token_infos(mode='IN_ORIGINAL')
-    # words = [t[-1] for t in tokens]
-    # pos_tags = [t[-2] for t in tokens]
-    # original_chem_start_tk_idx = training_instances[12].get_chemical_start_token_index(mode='IN_ORIGINAL')
-    # original_chem_last_tk_idx = training_instances[12].get_chemical_last_token_index(mode='IN_ORIGINAL')
-    # original_disease_start_token_index = training_instances[12].get_disease_start_token_index(mode='IN_ORIGINAL')
-    # original_disease_last_token_index = training_instances[12].get_disease_last_token_index(mode='IN_ORIGINAL')
-    # if original_chem_start_tk_idx < original_disease_start_token_index:
-    #     fst_ent_last_wd_position = original_chem_last_tk_idx
-    #     snd_ent_start_wd_position = original_disease_start_token_index
-    # else:
-    #     fst_ent_last_wd_position = original_disease_last_token_index
-    #     snd_ent_start_wd_position = original_chem_start_tk_idx
-    # words_in_between = basics.get_words_between_entities(words, fst_ent_last_wd_position, snd_ent_start_wd_position)
-    # words_in_between = post_pad_text_seq(words_in_between, maxlen_after_padding=150)
-    # pos_tags_in_between = basics.get_words_between_entities(
-    #     pos_tags, fst_ent_last_wd_position, snd_ent_start_wd_position)
-    # print(words_in_between)
-    # print(pos_tags_in_between)
-
-    # dev_X_sents, dev_X_pos, dev_X_represented_sentences, dev_X_dist_2_Chem, dev_X_dist_2_Dis, \
-    # dev_X_dep_path_2_root, dev_X_dep_path_2_chem, dev_X_dep_path_2_dis, \
-    # dev_X_chemicals, dev_X_diseases, dev_X_chem_lwds, dev_X_chem_ltags, dev_X_chem_rwds, dev_X_chem_rtags, \
-    # dev_X_dis_lwds, dev_X_dis_ltags, dev_X_dis_rwds, dev_X_dis_rtags, dev_Y, dev_Y_catigorical = generateInputs_v2(
-    #     dev_instances, dep_embd_model, sentence_maxlen=250, entity_context_size=3, word_represent_win_size=5)
-    # t2 = time.time()
-    # print(t2 - t1)
-
-    # print(tr_X_sents.get_value(borrow=True).shape)
-    #
-    # wd_Embd_W = theano.shared(value=pretrained_word_embeddings.syn0, name='wd_Embd_W', borrow=False)
-    #
-    # TH_Idx1 = T.iscalar()
-    # TH_Idx2 = T.iscalar()
-    # TH_Sent = T.imatrix('TH_Sentence')
-    # TH_Wd_represent = T.imatrix('TH_Wd_represent')
-    # TH_Dist2Chem = T.imatrix('TH_Dist_2_Chem')
-    # TH_Dist2Dis = T.imatrix('TH_Dist_2_Dis')
-    #
-    # TH_ChemEnt = T.imatrix('TH_ChemEntity')
-    # TH_DisEnt = T.imatrix('TH_DisEntity')
-    # TH_ChemLWds = T.imatrix('TH_ChemLeftWords')
-    # TH_ChemLTags = T.imatrix('TH_ChemLeftTags')
-    # TH_ChemRWds = T.imatrix('TH_ChemRightWords')
-    # TH_ChemRTags = T.imatrix('TH_ChemRightTags')
-    # TH_DisLWds = T.imatrix('TH_DisLeftWords')
-    # TH_DisLTags = T.imatrix('TH_DisLeftTags')
-    # TH_DisRWds = T.imatrix('TH_DisRightWords')
-    # TH_DisRTags = T.imatrix('TH_DisRightTags')
-    #
-    # # model 1
-    # layer_EntLookUp = EntityLookUpTableLayer(inputs=[TH_ChemEnt, TH_DisEnt], weights=wd_Embd_W)
-    # layer_WordLookUp = Seq2VecLookUpTableLayer(
-    #     inputs=[TH_ChemLWds, TH_ChemRWds, TH_DisLWds, TH_DisRWds], weights=wd_Embd_W)
-    # input_tensor = T.concatenate([layer_WordLookUp.outputs[0].flatten(2),
-    #                               layer_EntLookUp.outputs[0],
-    #                               layer_WordLookUp.outputs[1].flatten(2),
-    #                               layer_WordLookUp.outputs[2].flatten(2),
-    #                               layer_EntLookUp.outputs[1],
-    #                               layer_WordLookUp.outputs[3].flatten(2)], axis=1)
-    #
-    # train_model = theano.function(
-    #     inputs=[TH_Idx1, TH_Idx2], outputs=input_tensor,
-    #     givens={
-    #         TH_ChemEnt: tr_X_chemicals[TH_Idx1:TH_Idx2],
-    #         TH_DisEnt: tr_X_diseases[TH_Idx1:TH_Idx2],
-    #         TH_ChemLWds: tr_X_chem_lwds[TH_Idx1:TH_Idx2],
-    #         TH_ChemRWds: tr_X_chem_rwds[TH_Idx1:TH_Idx2],
-    #         TH_DisLWds: tr_X_dis_lwds[TH_Idx1:TH_Idx2],
-    #         TH_DisRWds: tr_X_dis_rwds[TH_Idx1:TH_Idx2],
-    #     }, allow_input_downcast=True, on_unused_input='ignore')
-    #
-    # print(train_model(0, 1).shape)
 
     print('*********** End **********')
     pass
