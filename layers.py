@@ -115,7 +115,6 @@ class SoftMaxLayer(object):
         return 1. - err
 
 
-# entity to embedding
 class EntityLookUpTableLayer(object):
     def __init__(self, inputs, weights):
         """
@@ -131,7 +130,6 @@ class EntityLookUpTableLayer(object):
 
         self.outputs = []
 
-        # get entity embeddings
         for ent_input in self.inputs:
             results, _ = theano.scan(fn=lambda x: T.mean(self.W[x[(x > -1.).nonzero()]], axis=0),
                                      sequences=[ent_input])
@@ -140,7 +138,6 @@ class EntityLookUpTableLayer(object):
         self.params = [self.W]
 
 
-# word to embedding
 class Seq2VecLookUpTableLayer(object):
     def __init__(self, inputs, vocab_size=None, dim_size=None, weights=None, scale=0.05, name=None):
         """
@@ -385,12 +382,7 @@ class MatrixConvPoolLayer(object):
             W_values *= 4
         self.W = theano.shared(value=W_values, name='W', borrow=True)
 
-        # b_values = np.zeros((nb_filters[0],), dtype=theano.config.floatX)
-        # self.b = theano.shared(value=b_values, name='b', borrow=True)
-
         def mat_conv(sent_matrix, first_last_pos, W):
-            # orginal_sent = sent_matrix.__getitem__([slice(first_last_pos[0], first_last_pos[1], None),
-            #                                         slice(None, None, None)])
             orginal_sent = sent_matrix
 
             half_window_size = window_size // 2
@@ -398,11 +390,9 @@ class MatrixConvPoolLayer(object):
             left = theano.shared(np.zeros((half_window_size, embd_dim), dtype=theano.config.floatX))
             right = theano.shared(np.zeros((half_window_size, embd_dim), dtype=theano.config.floatX))
 
-            # new_padded = T.concatenate([left, orginal_sent, right], axis=0)
             new_padded = T.join(0, left, orginal_sent, right)
 
             def tiny_concat(*V):
-                # return T.concatenate(V, axis=0)
                 return T.join(0, *V)
 
             rlts, _ = theano.scan(fn=tiny_concat, sequences=dict(input=new_padded, taps=mini_window))
