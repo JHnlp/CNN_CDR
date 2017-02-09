@@ -70,7 +70,7 @@ class CandidateInstance(object):
         self.depPathFromChem2Dis = depPathFromChem2Dis
 
         self.has_been_padded = False
-        self.padded_token_infos = None  # token infos after padding
+        self.padded_token_infos = None  
         self.chem_start_token_idx_after_padding = None
         self.chem_last_token_idx_after_padding = None
         self.dis_start_token_idx_after_padding = None
@@ -207,7 +207,6 @@ class CandidateInstance(object):
         :param padding_word:
         :return: return words list after padding.
         """
-        # Notes: cooccurrence means there is only one sentence inside the candidate instance
 
         if self.has_been_padded: return
 
@@ -218,7 +217,6 @@ class CandidateInstance(object):
         token_infos = self.get_token_infos(mode='IN_ORIGINAL')
         length = len(token_infos)
 
-        # a deep copy
         padded_token_infos_sequence = copy.deepcopy(token_infos)
 
         self.chem_start_token_idx_after_padding = None
@@ -247,10 +245,9 @@ class CandidateInstance(object):
             else:
                 raise ValueError('Padding type "%s" not understood' % padding)
 
-                # update the current indices for all tokens
         for idx, t_info in enumerate(padded_token_infos_sequence):
             token_idx = int(t_info[-3])
-            if token_idx < 0:  # this means some padded tokens.
+            if token_idx < 0: 
                 continue
 
             if int(token_idx) == chem_start_token_idx_before_padding:
@@ -385,16 +382,15 @@ def get_token_distance_2_entity(text_seq, entity_start_token_idx, entity_last_to
         if entity_start_token_idx <= idx <= entity_last_token_idx:
             list_of_token_distance.append(0)
 
-        # the word is on the left side of the entity
         if idx < entity_start_token_idx:
             dist = idx - int(entity_start_token_idx)
-            if sentence[idx] == '<PAD>':  # given the max_distance to the padding word (on the left).
+            if sentence[idx] == '<PAD>':  
                 dist = -max_distance
             list_of_token_distance.append(dist)
 
         if entity_last_token_idx < idx:
             dist = idx - int(entity_last_token_idx)
-            if sentence[idx] == '<PAD>':  # given the max_distance to the padding word (on the right).
+            if sentence[idx] == '<PAD>':  
                 dist = max_distance
             list_of_token_distance.append(dist)
 
@@ -428,12 +424,11 @@ def load_candidate_instances(instances_file):
             chem_dis_men_infos = [p for p in parts[1].split("_")]
             tokenized_sentence_text = parts[2]
 
-            tokens_infos = []  # corresponding to a sentence.
+            tokens_infos = []  
             for part in parts[3].split("  "):
-                x = part[6:-1]  # a token format: 'Token[10027919 16 0 11 0 NNS CONCLUSIONS]'
+                x = part[6:-1]  
                 component = x.split(' ')
 
-                # token information format: docid, sent_idx, start_off_in_sent, end_off_in_sent, token_idx, part-of-speech, token_text
                 token = [component[0], component[1], component[2], component[3],
                          component[4], component[5], component[6]]
                 tokens_infos.append(token)
@@ -461,7 +456,7 @@ def load_candidate_instances(instances_file):
 
 
 def represent_seqs_of_indices_by_context_window(gensim_model, seqs_of_indices, word_context_window_size):
-    index_of_padding_word = gensim_model.vocab.get('<PAD>').index  # pad the position before 'start' and at 'end'
+    index_of_padding_word = gensim_model.vocab.get('<PAD>').index  
     wd_dist = word_context_window_size // 2
 
     seqs_after_process = []
