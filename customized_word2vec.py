@@ -58,19 +58,16 @@ class SimpleWordDictionary(object):
         if not sentences:
             raise Exception("sentences should not be \"None\"")
 
-        # this word dictionay contains items as {word:freq} format
         self.dict_of_words = generate_word_dictionary(sentences)
 
         # print(len(self.dict_of_words))
         self.indexDict_sorted_by_alphabet, \
         self.indexDict_sorted_by_freq = self.getInsideDictionaries()
 
-    # return the NO. of total words in "WordDictionary"
     def getSizeOfDictionary(self):
         return len(self.dict_of_words)
 
     def getInsideDictionaries(self):
-        # this list contains items as [(word, freq)] format
         list_sorted_by_alphabet = sorted([(word, freq) for (word, freq) in self.dict_of_words.items()])
         indexDict_sorted_by_alphabet = {}
         for (index, (word, freq)) in enumerate(list_sorted_by_alphabet):
@@ -79,7 +76,6 @@ class SimpleWordDictionary(object):
 
             indexDict_sorted_by_alphabet[word] = index
 
-        # this list contains items as [(freq, word)] format
         list_sorted_by_freq = sorted([(freq, word) for (word, freq) in self.dict_of_words.items()], reverse=True)
         indexDict_sorted_by_freq = {}
         for (index, (freq, word)) in enumerate(list_sorted_by_freq):
@@ -90,7 +86,6 @@ class SimpleWordDictionary(object):
 
         return indexDict_sorted_by_alphabet, indexDict_sorted_by_freq
 
-    # two kinds of word indices
     def getWordIndices(self, word):
         return self.indexDict_sorted_by_alphabet.get(word, -1), self.indexDict_sorted_by_freq.get(word, -1)
 
@@ -130,7 +125,7 @@ def update_existing_embedding_model(embedding_model, new_words_embds):
     for tp in new_words_embds:
         word_text = tp[0]
         word_embds = tp[1]
-        if word_text in embedding_model.vocab:  # the word already exists in the embedding model
+        if word_text in embedding_model.vocab: 
             idx = embedding_model.vocab.get(word_text).index
             embedding_model.syn0[idx] = word_embds
             # raise Exception("the word '%s' is already in the embedding model and cannot be appended." % word_text)
@@ -168,13 +163,11 @@ def get_my_extended_word_embedding_model(external_large_word2vec_file, my_small_
 
     dim_size = my_local_small_ebds.syn0.shape[-1]
 
-    # add '<PAD>' word to the embedding model
     padding_word_embedding = np.zeros(dim_size, dtype='float32')  # padding word embedding is 0.0
     if '<PAD>' not in my_local_small_ebds:
         update_existing_embedding_model(my_local_small_ebds, [['<PAD>', padding_word_embedding]])
 
-    # add '<UNKNOWN>' word to the embedding model
-    np.random.seed(2000)  # for reproducibility
+    np.random.seed(2000)  
     unknown_word_embedding = np.random.uniform(-1.0, 1.0, dim_size).astype('float32')  # unknown word embedding
     if '<UNKNOWN>' not in my_local_small_ebds:
         update_existing_embedding_model(my_local_small_ebds, [['<UNKNOWN>', unknown_word_embedding]])
@@ -229,7 +222,6 @@ def train_a_customized_embedding_model():
     maxlen = np.max(lengths)
     print('The maximum sentence length: ', maxlen)
 
-    # train model
     model = gensim.models.Word2Vec(sentences, size=g_embedding_dim, alpha=g_embedding_model_learning_rate,
                                    window=g_embedding_window_size, min_count=g_embbeding_min_count_2_ignore, workers=4,
                                    sg=g_embbeding_model, hs=g_embbeding_hs_setting, iter=g_iter_count)
