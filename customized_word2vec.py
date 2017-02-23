@@ -214,46 +214,7 @@ def transfer_text_seq_2_index_seq(text_seq, embedding_model):
     return list_of_input_sequence
 
 
-def train_a_customized_embedding_model():
-    sentences = load_tokenized_sentences("../data/trainingSet_tokenized_sentences.txt")
-    sentences.extend(load_tokenized_sentences("../data/developmentSet_tokenized_sentences.txt"))
-    sentences.extend(load_tokenized_sentences("../data/testSet_tokenized_sentences.txt"))
-    lengths = [len(s) for s in sentences]
-    maxlen = np.max(lengths)
-    print('The maximum sentence length: ', maxlen)
-
-    model = gensim.models.Word2Vec(sentences, size=g_embedding_dim, alpha=g_embedding_model_learning_rate,
-                                   window=g_embedding_window_size, min_count=g_embbeding_min_count_2_ignore, workers=4,
-                                   sg=g_embbeding_model, hs=g_embbeding_hs_setting, iter=g_iter_count)
-    model = update_existing_embedding_model(model, [['<PAD>', np.zeros(g_embedding_dim, dtype='float32')]])
-
-    if g_embbeding_model == 0:
-        embedding_file_suffix = 'cbow'
-        print('Training mode: CBOW.')
-    elif g_embbeding_model == 1:
-        embedding_file_suffix = 'skipgram'
-        print('Training mode: Skip-gram.')
-    else:
-        raise Exception('Unknown training mode!')
-
-    model.save_word2vec_format('../data/embeddings.' + str(g_iter_count) + "_" + str(
-        g_embedding_dim) + '.' + embedding_file_suffix)
-
-    print('Total word number: ', len(model.vocab))
-
-    # load model
-    # mod = Word2Vec.load_word2vec_format(data_dir + 'word_embedings.gensim')
-
-    # continue train the existing model
-    # tokenized_sentences = MySentences('tokenizedSentence.txt')  # a memory-friendly iterator
-    # model = gensim.models.Word2Vec()  # an empty model, no training
-    # model.build_vocab(some_sentences)  # can be a non-repeatable, 1-pass generator
-    # model.train(other_sentences)  # can be a non-repeatable, 1-pass generator
-
-
 if __name__ == '__main__':
-    # train_a_customized_embedding_model()
-
     # md = construct_customized_word_embedding_model('../data/wordvectors/glove.840B.300d.bin', '../data/embeddings.5_300.cbow',
     #                                     'part-of-speech.vocab', 'syntactic.vocab', 'dependency.vocab')
 
