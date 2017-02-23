@@ -13,50 +13,16 @@ from keras import backend as K
 
 def rectify(X):
     return T.maximum(X, 0.)
-    # return T.nnet.relu(X, 0.)  # this doesn't work, I don't know why?
-
+    
 
 def negative_log_likelihood(p_y_given_x, y):
-    """Return the mean of the negative log-likelihood of the prediction
-    of this model under a given target distribution.
-
-    :type y: theano.tensor.TensorType
-    :param y: corresponds to a vector that gives for each example the
-              correct label
-
-    Note: we use the mean instead of the sum so that
-          the learning rate is less dependent on the batch size
-    """
-    # y.shape[0] is (symbolically) the number of rows in y, i.e.,
-    # number of examples (call it n) in the minibatch
-    # T.arange(y.shape[0]) is a symbolic vector which will contain
-    # [0,1,2,... n-1] T.log(self.p_y_given_x) is a matrix of
-    # Log-Probabilities (call it LP) with one row per example and
-    # one column per class LP[T.arange(y.shape[0]),y] is a vector
-    # v containing [LP[0,y[0]], LP[1,y[1]], LP[2,y[2]], ...,
-    # LP[n-1,y[n-1]]] and T.mean(LP[T.arange(y.shape[0]),y]) is
-    # the mean (across minibatch examples) of the elements in v,
-    # i.e., the mean log-likelihood across the minibatch.
     return -T.mean(T.log(p_y_given_x)[T.arange(y.shape[0]), y])
 
 
 def errors(y_pred, y):
-    """Return a float representing the number of errors in the minibatch
-    over the total number of examples of the minibatch ; zero one
-    loss over the size of the minibatch
-
-    :type y: theano.tensor.TensorType
-    :param y: corresponds to a vector that gives for each example the
-              correct label
-    """
-
-    # check if y has same dimension of y_pred
     if y.ndim != y_pred.ndim:
         raise TypeError('y should have the same shape as self.y_pred', ('y', y.type, 'y_pred', y_pred.type))
-    # check if y is of the correct datatype
     if y.dtype.startswith('int'):
-        # the T.neq operator returns a vector of 0s and 1s, where 1
-        # represents a mistake in prediction
         return T.mean(T.neq(y_pred, y))
     else:
         raise NotImplementedError()
@@ -113,16 +79,13 @@ def adadelta(loss, params, lr=0.4, rho=0.95, epsilon=1e-8):
                           for p in params]
     updates = []
     for p, g, acc, d_acc in zip(params, grads, accumulators, delta_accumulators):
-        # update accumulator
         new_acc = rho * acc + (1. - rho) * T.sqr(g)
         updates.append((acc, new_acc))
 
-        # use the new accumulator and the *old* delta_accumulator
         update = g * T.sqrt(d_acc + epsilon) / T.sqrt(new_acc + epsilon)
         new_p = p - lr * update
         updates.append((p, new_p))
 
-        # update delta_accumulator
         new_d_a = rho * d_acc + (1 - rho) * T.square(update)
         updates.append((d_acc, new_d_a))
     return updates
@@ -157,9 +120,6 @@ def adagrad(loss, params, lr=0.001, momentum=0.95, epsilon=1e-8):
         new_acc = acc + grad ** 2
         new_acc_sqrt = T.sqrt(new_acc + epsilon)
         grad = grad / new_acc_sqrt
-
-        #       isinf = T.or_(T.isinf(grad), T.isnan(grad))
-        #       grad = T.switch(isinf, 0., grad)
 
         updates.append((acc, new_acc))
         updates.append((param, param - (lr * (grad + momentum * param))))
