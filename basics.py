@@ -491,9 +491,6 @@ def represent_seqs_of_indices_by_context_window(gensim_model, seqs_of_indices, w
 
 if __name__ == '__main__':
     embedding_model = gensim.models.Word2Vec.load_word2vec_format('../data/word_embeddings.5_20.gensim')
-    # embedding_model = construct_customized_word_embedding_model(
-    #     '../data/wordvectors/glove.840B.300d.bin', '../data/embeddings.5_300.cbow', 'part-of-speech.vocab',
-    #     'syntactic.vocab', 'dependency.vocab')
     instances = load_candidate_instances('trainingSet.instances')
     instances.extend(load_candidate_instances('developmentSet.instances'))
     instances.extend(load_candidate_instances('testSet.instances'))
